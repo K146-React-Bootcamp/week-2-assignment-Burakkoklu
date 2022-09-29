@@ -6,19 +6,25 @@ const editModal = document.querySelector("#editModal");
 let todos = [];
 let todo;
 
-const renderTodos = () => {
+
+let current_page = 1;
+let rows = 10;
+
+
+const renderTodos = (page = 1) => {
 	root.innerHTML = "";
-	// todoları listele
+
 	const table = document.createElement("table");
 	table.setAttribute("class", "table table-hover");
 
 	const thead = document.createElement("thead");
+	
 	thead.innerHTML = `
     <tr>
-      <th scope="col">id</th>
-      <th scope="col">Başlık</th>
+      <th scope="col" id="user-sorting">id &nbsp;<button>&darr;</button></th>
+      <th scope="col" id="title-sorting">Başlık &nbsp;<button>&darr;</button></th>
       <th scope="col">Kullanıcı Id</th>
-      <th scope="col">Durum</th>
+      <th scope="col" id="comp-sorting">Durum &nbsp;<button>&darr;</button></th>
       <th scope="col"></th>
     </tr>
   `;
@@ -43,7 +49,14 @@ const renderTodos = () => {
     `;
 		tbody.appendChild(tr);
 	};
-	todos.slice(0, 15).forEach((item) => {
+
+	page --;
+	let start = rows * page;
+	console.log({start});
+	let end = start + rows;
+	console.log({end});
+	let paginatedItems = todos.slice(start, end);
+	paginatedItems.forEach((item) => {
 		renderItem(item);
 	});
 	table.appendChild(tbody);
@@ -54,7 +67,7 @@ const renderTodos = () => {
 			const id = Number(e.currentTarget.getAttribute("data-id"));
 			if (confirm("kaydı silmek istediğinize emin misiniz?")) {
 				todos = todos.filter((x) => x.id !== id);
-				renderTodos();
+				renderTodos(current_page);
 			}
 		});
 	});
@@ -69,7 +82,49 @@ const renderTodos = () => {
 			editModal.classList.add("show");
 		});
 	});
+
+	document.querySelector('#title-sorting').addEventListener('click',() => {
+		todos.sort((a, b) => {
+			const nameA = a.title.toUpperCase(); 
+			const nameB = b.title.toUpperCase(); 
+			if (nameA < nameB) {
+			  return -1;
+			}
+			if (nameA > nameB) {
+			  return 1;
+			}
+			return 0;
+		  });
+		  renderTodos(current_page);
+	});
+
+	document.querySelector('#user-sorting').addEventListener('click',() => {
+		todos.sort((a, b) => b - a).reverse();
+		  renderTodos(current_page);
+	});
+
+	document.querySelector('#comp-sorting').addEventListener('click',() => {
+		todos=todos.sort((a,b)=>{
+			if(a.completed==true && b.completed==false)
+			{
+				return -1;
+			}
+			
+		})
+	  renderTodos(current_page);
+});
 };
+
+
+document.querySelectorAll('.page-link').forEach((btn) => {
+	btn.addEventListener('click',() => {
+		let data_id = btn.getAttribute('data-id');
+		current_page = Number(data_id);
+		renderTodos(current_page);
+	});
+});
+
+
 
 editModal.querySelector("#save").addEventListener("click", () => {
 	todo.title = editModal.querySelector("#title").value;
@@ -88,6 +143,7 @@ editModal.querySelectorAll(".close").forEach((button) => {
 	});
 });
 
+
 fetch(todosUrl)
 	.then((resp) => resp.json())
 	.then((data = []) => {
@@ -97,10 +153,3 @@ fetch(todosUrl)
 	.catch((error) => {
 		errorLogger(error);
 	});
-
-	// sıralama ödevi algoritması
-	// table thead kısmındaki sıralama yapılacak kolonlara event listener eklenecek.
-	// event listener hangi kolon için tıklanıyorsa
-	// sort metodu kullanılarak sıralama yapılacak
-	// sıralanmış todos'todus içerisine atılacak
-	// renderTodos metodu çalıştırılacak.

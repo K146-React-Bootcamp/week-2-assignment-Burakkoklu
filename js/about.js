@@ -1,1 +1,1 @@
-renderHeader();
+renderHeader({activePage:"about.html"})
